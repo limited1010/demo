@@ -9,9 +9,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ba47f52e-07bb-4be2-84cb-16f04303a041" name="Default Changelist" comment="add Clear file&#10;submmit metertwo v3">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-    </list>
+    <list default="true" id="ba47f52e-07bb-4be2-84cb-16f04303a041" name="Default Changelist" comment="add Clear file&#10;submmit metertwo v3" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -29,8 +27,8 @@
     <option name="PUSH_AUTO_UPDATE" value="true" />
     <option name="PUSH_TAGS">
       <GitPushTagMode>
-        <option name="argument" value="--tags" />
-        <option name="title" value="All" />
+        <option name="argument" value="--follow-tags" />
+        <option name="title" value="Current Branch" />
       </GitPushTagMode>
     </option>
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$" />
@@ -177,7 +175,7 @@
       <workItem from="1624712246420" duration="15088000" />
       <workItem from="1624763626524" duration="4707000" />
       <workItem from="1624775539294" duration="13310000" />
-      <workItem from="1624792881631" duration="23522000" />
+      <workItem from="1624792881631" duration="23906000" />
     </task>
     <task id="LOCAL-00001" summary="add Clear file&#10;submmit metertwo v3">
       <created>1624816547718</created>
@@ -186,7 +184,14 @@
       <option name="project" value="LOCAL" />
       <updated>1624816547718</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="add Clear file&#10;submmit metertwo v3">
+      <created>1624816943410</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1624816943410</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
