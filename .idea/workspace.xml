@@ -9,7 +9,11 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="ba47f52e-07bb-4be2-84cb-16f04303a041" name="Default Changelist" comment="add Clear file&#10;submmit metertwo v3" />
+    <list default="true" id="ba47f52e-07bb-4be2-84cb-16f04303a041" name="Default Changelist" comment="add Clear file&#10;submmit metertwo v3">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/README.md" beforeDir="false" afterPath="$PROJECT_DIR$/README.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/src/main/resources/test.html" beforeDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -175,7 +179,7 @@
       <workItem from="1624712246420" duration="15088000" />
       <workItem from="1624763626524" duration="4707000" />
       <workItem from="1624775539294" duration="13310000" />
-      <workItem from="1624792881631" duration="23906000" />
+      <workItem from="1624792881631" duration="25382000" />
     </task>
     <task id="LOCAL-00001" summary="add Clear file&#10;submmit metertwo v3">
       <created>1624816547718</created>
