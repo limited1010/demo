@@ -16,7 +16,7 @@ import java.nio.channels.FileChannel;
 import java.nio.charset.*;
 import java.nio.file.*;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.*;
 
 import net.coobird.thumbnailator.Thumbnails;
 import org.apache.commons.lang3.StringUtils;
@@ -48,10 +48,15 @@ public class ImgToMd {
     static String oldImgPath = "/home/mi/MI/md/oldImg/";
     static String tmpPath = "/home/mi/MI/md/tmp/";
     static String suffix; // file suffix
-    static StringBuilder sb = new StringBuilder();
-    static LinkedList list = new LinkedList();
-    static HashMap hashMap = new HashMap();
+    //    static StringBuilder sb = new StringBuilder();
+    static StringBuffer sb = new StringBuffer();
+    //    static LinkedList list = new LinkedList();
+    static ConcurrentLinkedDeque list = new ConcurrentLinkedDeque();
+    static ConcurrentHashMap hashMap = new ConcurrentHashMap();
     static Map<Integer, List> map = new ConcurrentHashMap<Integer, List>();
+
+    private static final Integer threadPSize = 5;
+
 
     /**
      * 按文件修改时间排序
@@ -361,7 +366,7 @@ public class ImgToMd {
             fcl.close();
 
             copyImgNotRename(tmpPath, imgOutPath.concat(writeDir + "/")); // 不重命名，根据文件名直接压缩到指定目录
-            log.info(path.concat("success!"));
+            log.info(path.concat("\tsuccess!"));
         } catch (BufferOverflowException e) {
             log.error("bufferException!");
         } catch (IOException e) {
@@ -416,7 +421,7 @@ public class ImgToMd {
                     newfName = getImgByNet(sb.substring(sb.indexOf("("), sb.length()).substring(1)); // 下载图片
                     if (!newfName.isEmpty()) {
                         sb.replace(sb.indexOf("]("), sb.length(), "](".concat(imgOutPath + writeDir + "/").concat(newfName)); // 在这修改md文件中的图片链接,这两句不能省
-                        list = new LinkedList();
+                        list = new ConcurrentLinkedDeque();
                         list.add(oldData);
                         list.add(sb.toString());
                         map.put(i++, new ArrayList(list));
@@ -433,7 +438,7 @@ public class ImgToMd {
                     sb.replace(sb.indexOf("]("), sb.length(), "](".concat(imgOutPath + writeDir + "/").concat(newfName)); // 在这修改md文件中的图片链接
 //                    System.out.println("修改后的内容:"+sb.toString());
 
-                    list = new LinkedList();
+                    list = new ConcurrentLinkedDeque();
 //                    list.clear(); // 清空后整个清空
                     list.add(oldData);
                     list.add(sb.toString());
@@ -710,6 +715,11 @@ public class ImgToMd {
      */
     static public void upImgPathByAllMdFile(String path) {
 
+       /* ExecutorService exc = new ThreadPoolExecutor(threadPSize, threadPSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>());
+        SubTask subTask;
+        Future<?> future;
+        boolean isExit=true;*/
+
         List allMdFile = findMdFileByAll(path);
         File mdf;
         checkDirectory(oldImgPath);
@@ -720,13 +730,32 @@ public class ImgToMd {
                 mdf = new File(String.valueOf(allMdFile.get(i)));
                 if (mdf.exists() && mdf.isFile()) {
                     try {
-                        log.info("updateFile:".concat(mdf.toString()));
+                        log.info("updateFile:".concat(mdf.toString())); // 在这里使用多线程处理
                         findImgByMd(String.valueOf(mdf.toPath()));
+//                        subTask = new SubTask(mdf);
+//                        future = exc.submit(subTask);
+//                        log.info("submmit:" + mdf.toString());
                     } catch (Exception e) {
                         log.error(String.valueOf(e));
                     }
                 }
             }
+
+           /* exc.shutdown(); // 发出中断,没运行完继续运行
+            try {
+                while (isExit) {
+                    if (exc.isTerminated() == true) { // 判断线程池所有任务完成
+                        exc.shutdownNow();
+                        isExit = false;
+                        break;
+                    }
+                    exc.awaitTermination(15,TimeUnit.SECONDS); // 等待15秒
+                    //                    Thread.currentThread().sleep((long) (Math.random()*100));
+                }
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
+                }*/
+
         } else {
             log.warn("警告!图片目录为空,未做任何操作,请检查!!!");
             log.error("pleaseCheckSourceImgPath!");
@@ -737,6 +766,37 @@ public class ImgToMd {
             }
         }
     }
+
+    /***
+     * Desc:
+     * 用多线程处理，会导致数据错乱，完善中，不建议使用;
+     */
+    static class SubTask implements Runnable {
+        // 创建10个线程;
+        File mdf;
+
+        public SubTask(File mdf) {
+            this.mdf = mdf;
+        }
+
+        @Override
+        public void run() {
+
+            try {
+                log.info("threadName:" + Thread.currentThread().getName() + "\tThreadId:" + Thread.currentThread().getId() + "\t:" + mdf.toString());
+                findImgByMd(String.valueOf(mdf.toPath()));
+//            System.out.println("call:"+mdf.toString());
+                throw new InterruptedException();
+            } catch (InterruptedException e) {
+                log.info("done!\t" + Thread.currentThread().getName() + "\tThreadId:" + Thread.currentThread().getId() + "\t:" + mdf.toString());
+
+//                e.printStackTrace();
+            }
+        }
+
+
+    }
+
 
     /**
      * 压缩体积7m为290k左右，体积还不够小,比系统压缩工具还大，1比1压缩原图体积反增加;
