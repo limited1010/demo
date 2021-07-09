@@ -48,7 +48,7 @@ import static com.example.demo.ImageZipUtil.zipWidthHeightImageFile;
  * 文档整理程序:配合Typora使用;win系列未测试，新鲜出炉!
  * 主要有两功能:1.将所有截屏图片压缩后按修改时间先后顺序生成md文件;
  *           2.把md目录所有的md文件内的http图片链接下载到本地并更新图片引用或本地图片的归档整理;
- *      说明:第一次运行图片量较大的话可能比较慢，后续运行已优化在4ms内更新所有md文件图片引用;
+ *      说明:重要数据先备份！首次运行图片量较多的话可能比较慢，后续运行已优化在4ms内更新所有md文件图片引用;
  * 应用:1.截屏后生成的md图片文件方便保存浏览，整理后免维护;
  *   2.网页拷贝的内容随心记录，后期直接运行程序整理即可,省时省心;
  */
@@ -730,10 +730,11 @@ public class ImgToMd {
      */
     static public void upImgPathByAllMdFile(String path) {
 
-       /* ExecutorService exc = new ThreadPoolExecutor(threadPSize, threadPSize, 0L, TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>());
+        ExecutorService exc = new ThreadPoolExecutor(threadPSize, threadPSize, 0L,
+                TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>());
         SubTask subTask;
         Future<?> future;
-        boolean isExit=true;*/
+        boolean isExit = true;
 
         List allMdFile = findMdFileByAll(path);
         File mdf;
@@ -746,17 +747,16 @@ public class ImgToMd {
                 if (mdf.exists() && mdf.isFile()) {
                     try {
                         log.info("updateFile:".concat(mdf.toString())); // 在这里使用多线程处理
-                        findImgByMd(String.valueOf(mdf.toPath()));
-//                        subTask = new SubTask(mdf);
-//                        future = exc.submit(subTask);
-//                        log.info("submmit:" + mdf.toString());
+//                        findImgByMd(String.valueOf(mdf.toPath())); // 不使用线程可以打开
+                        subTask = new SubTask(mdf);
+                        future = exc.submit(subTask);
                     } catch (Exception e) {
                         log.error(String.valueOf(e));
                     }
                 }
             }
 
-           /* exc.shutdown(); // 发出中断,没运行完继续运行
+            exc.shutdown(); // 发出中断,拒绝执行新任务，直到队列所有任务全部执行完;
             try {
                 while (isExit) {
                     if (exc.isTerminated() == true) { // 判断线程池所有任务完成
@@ -764,12 +764,12 @@ public class ImgToMd {
                         isExit = false;
                         break;
                     }
-                    exc.awaitTermination(15,TimeUnit.SECONDS); // 等待15秒
-                    //                    Thread.currentThread().sleep((long) (Math.random()*100));
+                    exc.awaitTermination(15, TimeUnit.SECONDS); // 等待15秒
+                    // Thread.currentThread().sleep((long) (Math.random()*100));
                 }
-                } catch (InterruptedException e) {
-                    e.printStackTrace();
-                }*/
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
 
         } else {
             log.warn("警告!图片目录为空,未做任何操作,请检查!!!");
@@ -784,11 +784,12 @@ public class ImgToMd {
 
     /***
      * Desc:
-     * 用多线程处理，会导致数据错乱，完善中，不建议使用;
+     * 用多线程处理，可能会导致数据错乱，使用前先备份;
      */
     static class SubTask implements Runnable {
         // 创建10个线程;
         File mdf;
+        private ImgToMd imgToMd;
 
         public SubTask(File mdf) {
             this.mdf = mdf;
@@ -798,16 +799,15 @@ public class ImgToMd {
         public void run() {
 
             try {
+                imgToMd = new ImgToMd();
+
                 log.info("threadName:" + Thread.currentThread().getName() +
                         "\tThreadId:" + Thread.currentThread().getId() + "\t:" + mdf.toString());
-                findImgByMd(String.valueOf(mdf.toPath()));
-//            System.out.println("call:"+mdf.toString());
+                imgToMd.findImgByMd(String.valueOf(mdf.toPath()));
                 throw new InterruptedException();
             } catch (InterruptedException e) {
                 log.info("done!\t" + Thread.currentThread().getName() +
                         "\tThreadId:" + Thread.currentThread().getId() + "\t:" + mdf.toString());
-
-//                e.printStackTrace();
             }
         }
     }
