@@ -10,9 +10,7 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="ba47f52e-07bb-4be2-84cb-16f04303a041" name="Default Changelist" comment="add Clear file&#10;submmit metertwo v3">
-      <change beforePath="$PROJECT_DIR$/.idea/compiler.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/compiler.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/demo.iml" beforeDir="false" afterPath="$PROJECT_DIR$/demo.iml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/src/main/java/com/example/demo/ImgToMd.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/com/example/demo/ImgToMd.java" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -171,7 +169,7 @@
       <workItem from="1625756390608" duration="863000" />
       <workItem from="1625757300851" duration="15455000" />
       <workItem from="1625797305437" duration="3724000" />
-      <workItem from="1625803721413" duration="731000" />
+      <workItem from="1625803721413" duration="1695000" />
     </task>
     <task id="LOCAL-00001" summary="add Clear file&#10;submmit metertwo v3">
       <created>1624816547718</created>
@@ -254,7 +252,7 @@
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">
           <url>file://$PROJECT_DIR$/src/main/java/com/example/demo/ImgToMd.java</url>
-          <line>802</line>
+          <line>803</line>
           <option name="timeStamp" value="53" />
         </line-breakpoint>
         <line-breakpoint enabled="true" type="java-line">

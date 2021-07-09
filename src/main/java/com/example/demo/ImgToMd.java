@@ -799,18 +799,18 @@ public class ImgToMd {
         public void run() {
 
             try {
-                log.info("threadName:" + Thread.currentThread().getName() + "\tThreadId:" + Thread.currentThread().getId() + "\t:" + mdf.toString());
+                log.info("threadName:" + Thread.currentThread().getName() +
+                        "\tThreadId:" + Thread.currentThread().getId() + "\t:" + mdf.toString());
                 findImgByMd(String.valueOf(mdf.toPath()));
 //            System.out.println("call:"+mdf.toString());
                 throw new InterruptedException();
             } catch (InterruptedException e) {
-                log.info("done!\t" + Thread.currentThread().getName() + "\tThreadId:" + Thread.currentThread().getId() + "\t:" + mdf.toString());
+                log.info("done!\t" + Thread.currentThread().getName() +
+                        "\tThreadId:" + Thread.currentThread().getId() + "\t:" + mdf.toString());
 
 //                e.printStackTrace();
             }
         }
-
-
     }
 
 
