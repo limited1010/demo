@@ -29,7 +29,23 @@ import static com.example.demo.ImageZipUtil.zipWidthHeightImageFile;
  * @date 6/27/21 11:00 PM
  * @version 1.0
  *
- * .md图片整理程序。配合Typora使用;win系列未测试，新鲜出炉!仅做个人Java技术学习工具用，请勿非法使用!
+ * Copyright [limited1010] [name of copyright owner]
+ *
+ *    Licensed under the Apache License, Version 2.0 (the "License");
+ *    you may not use this file except in compliance with the License.
+ *    You may obtain a copy of the License at
+ *
+ *      http://www.apache.org/licenses/LICENSE-2.0
+ *
+ *    Unless required by applicable law or agreed to in writing, software
+ *    distributed under the License is distributed on an "AS IS" BASIS,
+ *    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ *    See the License for the specific language governing permissions and
+ *    limitations under the License.
+ *
+ * 免责说明:本仓库基于Apache License 2.0开源许可证下仅做个人学习目的，
+ *        请遵守所在地相关法规，由该仓库下源码衍生变体造成的所有后果与原仓库所有者及贡献者无关!
+ * 文档整理程序:配合Typora使用;win系列未测试，新鲜出炉!
  * 主要有两功能:1.将所有截屏图片压缩后按修改时间先后顺序生成md文件;
  *           2.把md目录所有的md文件内的http图片链接下载到本地并更新图片引用或本地图片的归档整理;
  *      说明:第一次运行图片量较大的话可能比较慢，后续运行已优化在4ms内更新所有md文件图片引用;
