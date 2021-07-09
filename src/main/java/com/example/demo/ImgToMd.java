@@ -54,8 +54,7 @@ import static com.example.demo.ImageZipUtil.zipWidthHeightImageFile;
  */
 @Slf4j
 public class ImgToMd {
-
-
+    
     static String imgPath = "/home/mi/Pictures/img/Screenshots/"; // img path
     //    static String imgPath = "/home/mi/Pictures/img/screenshot/"; // img path
 //    static String imgPath = "/home/mi/Pictures/img/image/"; // img path
