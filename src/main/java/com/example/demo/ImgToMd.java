@@ -22,6 +22,8 @@ import net.coobird.thumbnailator.Thumbnails;
 import org.apache.commons.lang3.StringUtils;
 
 import static com.example.demo.ImageZipUtil.zipWidthHeightImageFile;
+import static com.example.demo.PhotoDigest.compare;
+import static com.example.demo.PhotoDigest.getData;
 
 /***
  * Desc:
@@ -130,6 +132,7 @@ public class ImgToMd {
 //            initDirectory(imgOutPath.concat(writeDir + "/")); // 初始化目录,会清空目录，慎重启用
 
             File[] files = sortFileByModifyTime(imgPath);
+            // 在这可以去重处理做相似度判断
             for (File fs : files) {
                 suffix = null;
                 suffix = fs.getName().substring(fs.getName().lastIndexOf(".") + 1, fs.getName().length()); // 判断后缀
@@ -141,7 +144,7 @@ public class ImgToMd {
                     File oldFile = new File(imgPath.concat(fs.getName()));
                     String newFilePath = imgOutPath.concat(writeDir).concat(String.valueOf(sb));
 
-                    imgZip(oldFile, newFilePath);
+                    imgZip(oldFile, newFilePath); // 压缩处理
                 }
             }
             log.info("genMdFile!");
@@ -813,6 +816,46 @@ public class ImgToMd {
     }
 
 
+    /***
+     * Desc: 移动文件
+     */
+    static void mvFile(String soc, String dir) {
+        try {
+            Files.move(Paths.get(soc), Paths.get(dir), StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException e) {
+            log.error(e.toString());
+        }
+    }
+
+    /**
+     * 判断指定目录图片相似性,不与自己比较且不与比过的比较
+     * 目前速度难以忍受，不建议启用
+     */
+    static public void checkImgsIsRepeat(String path) {
+        File[] files = sortFileByModifyTime(path);
+
+        for (int i = 0; i <= files.length; i++) {
+            for (int j = i + 1; j < files.length; j++) {
+                if (!files[i].getName().equals(files[j].getName())) { // 不与自己比较
+                    float percent = compare(getData(files[i].getAbsolutePath()),
+                            getData(files[j].getAbsolutePath()));
+                    if (percent == 0F) {
+                        log.info(files[i].getName() + "与" + files[j].getName() + "无法比较!");
+                    } else {
+                        log.info(files[i].getName() + "与" + files[j].getName() + "相似度为" + percent + "%");
+                        if (percent >= 70F) { // 建议定为70%,74%以上即可判断是否为同一张图
+                            log.warn(files[i].getName() + "与" + files[j].getName() + "相似度大于70%");
+                            copyFileByChannelTransfer(files[i].getAbsolutePath(), tmpPath.concat(files[i].getName()));
+                            copyFileByChannelTransfer(files[j].getAbsolutePath(), tmpPath.concat(files[j].getName()));
+                        }
+                    }
+//                    System.out.println("i="+i+"\tj="+j+"\t"+files[i].getName() + "与" + files[j].getName() + "相似度为" + "%");
+                }
+            }
+        }
+    }
+
+
     /**
      * 压缩体积7m为290k左右，体积还不够小,比系统压缩工具还大，1比1压缩原图体积反增加;
      *
@@ -841,7 +884,7 @@ public class ImgToMd {
 
             upImgPathByAllMdFile(mdFilePath.concat(",img,ky,company,oldImg,tmp,mind,heat"));//排除目录以","分隔
 
-//            test("","");
+//            test(imgPath);
 
             System.gc(); // 高版本可能需要显示的调用
         } catch (IllegalAccessError e) {
@@ -851,11 +894,31 @@ public class ImgToMd {
     }
 
     /**
-     * @param sourceImg
-     * @param outImg
-     * @return
+     * 判断指定目录图片相似性,不与自己比较且不与比过的比较
+     * 目前速度难以忍受，不建议启用
      */
-    static public void test(String sourceImg, String outImg) {
+    static public void test(String path) {
+        File[] files = sortFileByModifyTime(path);
+
+        for (int i = 0; i <= files.length; i++) {
+            for (int j = i + 1; j < files.length; j++) {
+                if (!files[i].getName().equals(files[j].getName())) { // 不与自己比较
+                    float percent = compare(getData(files[i].getAbsolutePath()),
+                            getData(files[j].getAbsolutePath()));
+                    if (percent == 0F) {
+                        log.info(files[i].getName() + "与" + files[j].getName() + "无法比较!");
+                    } else {
+                        log.info(files[i].getName() + "与" + files[j].getName() + "相似度为" + percent + "%");
+                        if (percent >= 70F) { // 建议定为70%,74%以上即可判断是否为同一张图
+                            log.warn(files[i].getName() + "与" + files[j].getName() + "相似度大于70%");
+                            copyFileByChannelTransfer(files[i].getAbsolutePath(), tmpPath.concat(files[i].getName()));
+                            copyFileByChannelTransfer(files[j].getAbsolutePath(), tmpPath.concat(files[j].getName()));
+                        }
+                    }
+//                    System.out.println("i="+i+"\tj="+j+"\t"+files[i].getName() + "与" + files[j].getName() + "相似度为" + "%");
+                }
+            }
+        }
 
     }
 
