@@ -725,6 +725,76 @@ public class ImgToMd {
         return new ArrayList(mdFile);
     }
 
+    static void waitExecutorService(ExecutorService exc) {
+        boolean isExit = true;
+        exc.shutdown(); // 发出中断,拒绝执行新任务，直到队列所有任务全部执行完;
+        try {
+            while (isExit) {
+                if (exc.isTerminated() == true) { // 判断线程池所有任务完成
+                    exc.shutdownNow();
+                    isExit = false;
+                    break;
+                }
+                exc.awaitTermination(15, TimeUnit.SECONDS); // 等待15秒
+                // Thread.currentThread().sleep((long) (Math.random()*100));
+            }
+        } catch (InterruptedException e) {
+            e.printStackTrace();
+        }
+
+    }
+
+    /***
+     * Desc: 充分利用多线程找出指定目录图集两两相似度;
+     * 一般比率大于70%即可判断图重复，320多张图大概耗时一个半小时;
+     * 除机器性能外后续有待优化，受限于cpu,后续可上gpu!
+     * 警告:数量较多仍可能耗时极长,思路是拆分成多个任务去比对;
+     * 图集海量巨大则不建议启用!!!
+     */
+    static class SubTask1 implements Runnable {
+        File files[];
+        Integer index;
+
+        public SubTask1(File[] files, Integer index) {
+            this.files = files;
+            this.index = index;
+        }
+
+        @Override
+        public void run() {
+            try {
+
+                for (int i = index; i < index + 1; i++) { // 只要求执行一次
+                    for (int j = i + 1; j < files.length; j++) { // 给定的index找出后面的两两比较
+//                        System.out.println(Thread.currentThread().getId() + "\ti=" + i + "\tindex=" +
+//                        index + "\tfile[" + i + "]=" + files[i] + "\tfiles[" + j + "]=" + files[j]);
+
+                        if (!files[i].getName().equals(files[j].getName())) { // 不与自己比较
+                            float percent = compare(getData(files[i].getAbsolutePath()),
+                                    getData(files[j].getAbsolutePath()));
+                            if (percent == 0F) {
+                                log.info(files[i].getName() + "与" + files[j].getName() + "无法比较!");
+                            } else {
+                                log.info(files[i].getName() + "与" + files[j].getName() + "相似度为" + percent + "%");
+                                if (percent >= 70F) { // 建议定为70%,74%以上即可判断是否为同一张图
+                                    log.warn(files[i].getName() + "与" + files[j].getName() + "相似度大于70%");
+                                    copyFileByChannelTransfer(files[i].getAbsolutePath(), tmpPath.concat(files[i].getName()));
+                                    copyFileByChannelTransfer(files[j].getAbsolutePath(), tmpPath.concat(files[j].getName()));
+                                }
+                            }
+//                    System.out.println("i="+i+"\tj="+j+"\t"+files[i].getName() + "与" + files[j].getName() + "相似度为" + "%");
+                        }
+                    }
+                    break;
+                }
+                throw new InterruptedException(Thread.currentThread().getId() + "\tisOver!");
+            } catch (InterruptedException e) {
+                log.info(e.toString());
+            }
+        }
+    }
+
+
     /**
      * 从md目录中所有文件依次找出图片并更新路径
      *
@@ -737,7 +807,7 @@ public class ImgToMd {
                 TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>());
         SubTask subTask;
         Future<?> future;
-        boolean isExit = true;
+//        boolean isExit = true;
 
         List allMdFile = findMdFileByAll(path);
         File mdf;
@@ -759,20 +829,7 @@ public class ImgToMd {
                 }
             }
 
-            exc.shutdown(); // 发出中断,拒绝执行新任务，直到队列所有任务全部执行完;
-            try {
-                while (isExit) {
-                    if (exc.isTerminated() == true) { // 判断线程池所有任务完成
-                        exc.shutdownNow();
-                        isExit = false;
-                        break;
-                    }
-                    exc.awaitTermination(15, TimeUnit.SECONDS); // 等待15秒
-                    // Thread.currentThread().sleep((long) (Math.random()*100));
-                }
-            } catch (InterruptedException e) {
-                e.printStackTrace();
-            }
+            waitExecutorService(exc); // 等待线程结束
 
         } else {
             log.warn("警告!图片目录为空,未做任何操作,请检查!!!");
@@ -832,28 +889,19 @@ public class ImgToMd {
      * 目前速度难以忍受，不建议启用
      */
     static public void checkImgsIsRepeat(String path) {
-        File[] files = sortFileByModifyTime(path);
 
-        for (int i = 0; i <= files.length; i++) {
-            for (int j = i + 1; j < files.length; j++) {
-                if (!files[i].getName().equals(files[j].getName())) { // 不与自己比较
-                    float percent = compare(getData(files[i].getAbsolutePath()),
-                            getData(files[j].getAbsolutePath()));
-                    if (percent == 0F) {
-                        log.info(files[i].getName() + "与" + files[j].getName() + "无法比较!");
-                    } else {
-                        log.info(files[i].getName() + "与" + files[j].getName() + "相似度为" + percent + "%");
-                        if (percent >= 70F) { // 建议定为70%,74%以上即可判断是否为同一张图
-                            log.warn(files[i].getName() + "与" + files[j].getName() + "相似度大于70%");
-                            copyFileByChannelTransfer(files[i].getAbsolutePath(), tmpPath.concat(files[i].getName()));
-                            copyFileByChannelTransfer(files[j].getAbsolutePath(), tmpPath.concat(files[j].getName()));
-                        }
-                    }
-//                    System.out.println("i="+i+"\tj="+j+"\t"+files[i].getName() + "与" + files[j].getName() + "相似度为" + "%");
-                }
+            ExecutorService exc = new ThreadPoolExecutor(threadPSize, threadPSize, 0L,
+                    TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>());
+            SubTask1 subTask1;
+
+            File[] files = sortFileByModifyTime(path);
+            for (int i = 0; i < files.length - 1; i++) {
+                subTask1 = new SubTask1(files, i);
+                exc.submit(subTask1);
             }
+            waitExecutorService(exc); // 等待线程结束
+
         }
-    }
 
 
     /**
@@ -895,31 +943,51 @@ public class ImgToMd {
 
     /**
      * 判断指定目录图片相似性,不与自己比较且不与比过的比较
-     * 目前速度难以忍受，不建议启用
+     * 目前速度仍难以忍受，不建议启用
      */
     static public void test(String path) {
-        File[] files = sortFileByModifyTime(path);
+        ExecutorService exc = new ThreadPoolExecutor(threadPSize, threadPSize, 0L,
+                TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>());
+        SubTask1 subTask1;
 
-        for (int i = 0; i <= files.length; i++) {
-            for (int j = i + 1; j < files.length; j++) {
-                if (!files[i].getName().equals(files[j].getName())) { // 不与自己比较
-                    float percent = compare(getData(files[i].getAbsolutePath()),
-                            getData(files[j].getAbsolutePath()));
-                    if (percent == 0F) {
-                        log.info(files[i].getName() + "与" + files[j].getName() + "无法比较!");
-                    } else {
-                        log.info(files[i].getName() + "与" + files[j].getName() + "相似度为" + percent + "%");
-                        if (percent >= 70F) { // 建议定为70%,74%以上即可判断是否为同一张图
-                            log.warn(files[i].getName() + "与" + files[j].getName() + "相似度大于70%");
-                            copyFileByChannelTransfer(files[i].getAbsolutePath(), tmpPath.concat(files[i].getName()));
-                            copyFileByChannelTransfer(files[j].getAbsolutePath(), tmpPath.concat(files[j].getName()));
-                        }
-                    }
-//                    System.out.println("i="+i+"\tj="+j+"\t"+files[i].getName() + "与" + files[j].getName() + "相似度为" + "%");
-                }
-            }
+        File[] files = sortFileByModifyTime(path);
+        for (int i = 0; i < files.length - 1; i++) {
+            subTask1 = new SubTask1(files, i);
+            exc.submit(subTask1);
         }
+        waitExecutorService(exc); // 等待线程结束
 
     }
 
 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
