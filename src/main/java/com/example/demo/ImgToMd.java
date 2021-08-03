@@ -648,13 +648,16 @@ public class ImgToMd {
      * @param dectPath
      */
     public static void copyImgNotRename(String sourcePath, String dectPath) {
+        String f1, f2;
         File[] files = sortFileByFileName(sourcePath);
         for (File fs : files) {
             if (fs.isFile() && fs.exists()) {
+                f1 = fs.getAbsolutePath();
+                f2 = dectPath.concat(fs.getName());
 //                imgZip(fs, dectPath.concat(fs.getName())); // 压缩或拷贝目录下所有图片到指定目录
-                zipImgByThubnails(fs.getAbsolutePath(), dectPath.concat(fs.getName()));
-
-                syncModified(fs.getAbsolutePath(), dectPath); // 同步元数据
+//                zipImgByThubnails(fs.getAbsolutePath(), dectPath.concat(fs.getName()));
+                copyFileByChannelTransfer(f1, f2); // 确保只在生成文件时压缩一次,这里我们直接拷贝;
+                syncModified(f1, f2); // 同步元数据
             }
         }
     }
@@ -956,11 +959,9 @@ public class ImgToMd {
         try {
             // 将图片生成md文件
             copyImgGenMdFile("/home/mi/MI/md/tmp/oldImg.md");
-//            writeToMdFile("oldImg",".md");
 
             // 整理img目录，只修改图片链接;将md文件中的所有图片移动到按文件命名的img目录内并修改md链接
-
-//            upImgPathByAllMdFile(mdFilePath.concat(",img,ky,company,oldImg,tmp,mind,heat"));//排除目录以","分隔
+            upImgPathByAllMdFile(mdFilePath.concat(",img,ky,company,oldImg,tmp,mind,heat"));//排除目录以","分隔
 
 //            test(imgPath);
 
