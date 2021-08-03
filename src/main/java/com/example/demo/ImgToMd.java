@@ -115,7 +115,7 @@ public class ImgToMd {
     }
 
     /**
-     * 将所有图片压缩体积后按时间先后顺序转换成md文件
+     * 将所有图片压缩体积后按时间先后顺序转换成md文件，与目录整理共用oldImg
      *
      * @return
      */
@@ -123,30 +123,35 @@ public class ImgToMd {
 
         String mdFile = path.substring(path.lastIndexOf("/")).substring(1);
         String mdSuffix = mdFile.substring(mdFile.lastIndexOf("."));
-        String writeDir = mdFile.substring(0, mdFile.length() - mdSuffix.length());
+//        String writeDir = mdFile.substring(0, mdFile.length() - mdSuffix.length());
+        String writeDir = "oldImg"; // 图片生成目录，会初始化！
 
         try {
             int i = 0;
             checkDirectory(imgPath); // check directory
-            checkDirectory(imgOutPath.concat(writeDir + "/"));
-//            initDirectory(imgOutPath.concat(writeDir + "/")); // 初始化目录,会清空目录，慎重启用
+            checkDirectory(mdFilePath.concat(writeDir + "/"));
+            initDirectory(mdFilePath.concat(writeDir + "/")); // 初始化目录,会清空目录，慎重启用
 
             File[] files = sortFileByModifyTime(imgPath);
+            File newFile;
             // 在这可以去重处理做相似度判断
             for (File fs : files) {
                 suffix = null;
                 suffix = fs.getName().substring(fs.getName().lastIndexOf(".") + 1, fs.getName().length()); // 判断后缀
                 if (suffix.equalsIgnoreCase("jpg") || suffix.equalsIgnoreCase("png")) {
-                    sb.delete(0, sb.length()); // 可以避免反复new对象
-//                tempList.add(fs.getAbsoluteFile());
-                    sb.append("/img_").append(i++).append(".").append(suffix);
+//                    sb.delete(0, sb.length()); // 可以避免反复new对象
+////                tempList.add(fs.getAbsoluteFile());
+//                    sb.append("/img_").append(i++).append(".").append(suffix);
 //                copyFileByChannelTransfer(fs.getPath(), targetPath.getPath() + suffix); // 拷贝文件到指定位置
-                    File oldFile = new File(imgPath.concat(fs.getName()));
-                    String newFilePath = imgOutPath.concat(writeDir).concat(String.valueOf(sb));
+                    String oldFile = String.valueOf(new File(imgPath.concat(fs.getName())));
+                    String newFilePath = mdFilePath.concat(writeDir).concat("/" + fs.getName());
 
-                    imgZip(oldFile, newFilePath); // 压缩处理
+//                    imgZip(oldFile, newFilePath); // 压缩处理
+                    zipImgByThubnails(oldFile,newFilePath);
+//                    syncModified(fs.getAbsolutePath(), newFilePath); // 同步元数据
                 }
             }
+
             log.info("genMdFile!");
             writeToMdFile(writeDir, mdSuffix); // 生成md文件
 
@@ -188,6 +193,7 @@ public class ImgToMd {
                 e.printStackTrace();
             }
         }
+        syncModified(sourcePath, targetPath); // 同步元数据
     }
 
     /**
@@ -197,24 +203,24 @@ public class ImgToMd {
      * @param suffix
      */
     public static void writeToMdFile(String file, String suffix) { // 判断文件是否存在;
-        String tempPath = "/home/mi/MI/md/tmp/"; // 在这修改md生成目录
+        String tempPath = tmpPath; // 在这修改md生成目录
         checkDirectory(tempPath);
         String fileName = tempPath.concat(file + suffix);
         File mdFile = new File(tempPath.concat(file + suffix));
-        File[] imgFile = sortFileByFileName(imgOutPath.concat(file + "/"));
+        File[] imgFile = sortFileByModifyTime(mdFilePath.concat(file + "/")); // 共用oldImg
         Path path = Paths.get(fileName);
-        if (!mdFile.exists()) {
-            mdFile.mkdirs();
-        }
 
         try (BufferedWriter writer =
                      Files.newBufferedWriter(path, StandardCharsets.UTF_8)) {
+            if (!mdFile.exists()) {
+                mdFile.createNewFile();
+            }
             for (File f : imgFile) {
                 if (f.isFile()) {
                     log.info("write:".concat(f.getName()));
                     sb.delete(0, sb.length()); // 可以避免反复new对象
                     writer.write(String.valueOf(sb.append("![")
-                            .append(f.getName()).append("](../img/").
+                            .append(f.getName()).append("](../").
                                     append(file).append("/").
                                     append(f.getName()).append(")\n")));
                 }
@@ -259,6 +265,7 @@ public class ImgToMd {
             String imagpath = zipWidthHeightImageFile(oldFile, newFilePath, width, height, 0.2f);
             log.info("saveImgTo:".concat(imagpath));
         }
+        syncModified(oldFile.toString(), newFilePath); // 同步元数据
     }
 
     /**
@@ -610,6 +617,17 @@ public class ImgToMd {
         return newName;
     }
 
+    /***
+     * Desc: 同步元数据
+     * @param p1
+     * @param p2
+     */
+    static void syncModified(String p1, String p2) {
+        File f1 = new File(p1);
+        File f2 = new File(p2);
+        f2.setLastModified(f1.lastModified()); // 同步元数据
+    }
+
     /**
      * 拷贝图片
      *
@@ -617,9 +635,10 @@ public class ImgToMd {
      */
     static public void moveFile(String fileName) {
         // 从imgOutPath拷贝到imgPath
-
-        copyFileByChannelTransfer(oldImgPath.concat(fileName), tmpPath.concat(fileName)); // 拷贝文件到指定位置
-
+        String p1 = oldImgPath.concat(fileName);
+        String p2 = tmpPath.concat(fileName);
+        copyFileByChannelTransfer(p1, p2); // 拷贝文件到指定位置
+        syncModified(p1, p2); // 同步元数据
     }
 
     /**
@@ -632,7 +651,10 @@ public class ImgToMd {
         File[] files = sortFileByFileName(sourcePath);
         for (File fs : files) {
             if (fs.isFile() && fs.exists()) {
-                imgZip(new File(String.valueOf(fs)), dectPath.concat(fs.getName())); // 压缩或拷贝目录下所有图片到指定目录
+//                imgZip(fs, dectPath.concat(fs.getName())); // 压缩或拷贝目录下所有图片到指定目录
+                zipImgByThubnails(fs.getAbsolutePath(),dectPath.concat(fs.getName()));
+
+                syncModified(fs.getAbsolutePath(), dectPath); // 同步元数据
             }
         }
     }
@@ -803,10 +825,10 @@ public class ImgToMd {
      */
     static public void upImgPathByAllMdFile(String path) {
 
-        ExecutorService exc = new ThreadPoolExecutor(threadPSize, threadPSize, 0L,
-                TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>());
-        SubTask subTask;
-        Future<?> future;
+//        ExecutorService exc = new ThreadPoolExecutor(threadPSize, threadPSize, 0L,
+//                TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>());
+//        SubTask subTask;
+//        Future<?> future;
 //        boolean isExit = true;
 
         List allMdFile = findMdFileByAll(path);
@@ -819,17 +841,17 @@ public class ImgToMd {
                 mdf = new File(String.valueOf(allMdFile.get(i)));
                 if (mdf.exists() && mdf.isFile()) {
                     try {
-                        log.info("updateFile:".concat(mdf.toString())); // 在这里使用多线程处理
-//                        findImgByMd(String.valueOf(mdf.toPath())); // 不使用线程可以打开
-                        subTask = new SubTask(mdf);
-                        future = exc.submit(subTask);
+                        log.info("updateFile:".concat(mdf.toString())); // 在这里使用多线程处理,
+                        findImgByMd(String.valueOf(mdf.toPath())); // 不使用线程可以打开
+//                        subTask = new SubTask(mdf);
+//                        future = exc.submit(subTask);
                     } catch (Exception e) {
                         log.error(String.valueOf(e));
                     }
                 }
             }
 
-            waitExecutorService(exc); // 等待线程结束
+//            waitExecutorService(exc); // 等待线程结束
 
         } else {
             log.warn("警告!图片目录为空,未做任何操作,请检查!!!");
@@ -890,18 +912,18 @@ public class ImgToMd {
      */
     static public void checkImgsIsRepeat(String path) {
 
-            ExecutorService exc = new ThreadPoolExecutor(threadPSize, threadPSize, 0L,
-                    TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>());
-            SubTask1 subTask1;
+        ExecutorService exc = new ThreadPoolExecutor(threadPSize, threadPSize, 0L,
+                TimeUnit.MILLISECONDS, new LinkedBlockingDeque<Runnable>());
+        SubTask1 subTask1;
 
-            File[] files = sortFileByModifyTime(path);
-            for (int i = 0; i < files.length - 1; i++) {
-                subTask1 = new SubTask1(files, i);
-                exc.submit(subTask1);
-            }
-            waitExecutorService(exc); // 等待线程结束
-
+        File[] files = sortFileByModifyTime(path);
+        for (int i = 0; i < files.length - 1; i++) {
+            subTask1 = new SubTask1(files, i);
+            exc.submit(subTask1);
         }
+        waitExecutorService(exc); // 等待线程结束
+
+    }
 
 
     /**
@@ -912,25 +934,33 @@ public class ImgToMd {
      * @return
      */
     static public void zipImgByThubnails(String sourceImg, String outImg) {
-
-        try {
-            Thumbnails.of(sourceImg)
-                    .scale(1f)
-                    .outputQuality(0.1f)
-                    .toFile(outImg);
-        } catch (IOException e) {
-            e.printStackTrace();
+        log.info("zip\t"+outImg);
+        File f1=new File(sourceImg);
+        if (f1.length() / 1024 >= 200) { // 大于200kb则压缩
+            try {
+                Thumbnails.of(sourceImg)
+                        .scale(0.5f)
+                        .outputQuality(0.4f)
+                        .toFile(outImg);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }else {
+            copyFileByChannelTransfer(sourceImg,outImg);
         }
+
+        syncModified(sourceImg,outImg);
     }
 
     public static void main(String[] args) {
         try {
             // 将图片生成md文件
-//            copyImgGenMdFile("/home/mi/MI/md/temp/test.md");
+            copyImgGenMdFile("/home/mi/MI/md/tmp/oldImg.md");
+//            writeToMdFile("oldImg",".md");
 
             // 整理img目录，只修改图片链接;将md文件中的所有图片移动到按文件命名的img目录内并修改md链接
 
-            upImgPathByAllMdFile(mdFilePath.concat(",img,ky,company,oldImg,tmp,mind,heat"));//排除目录以","分隔
+//            upImgPathByAllMdFile(mdFilePath.concat(",img,ky,company,oldImg,tmp,mind,heat"));//排除目录以","分隔
 
 //            test(imgPath);
 

@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Title</title>
+</head>
+<body>
+<!-- 组件详解-手动挂载实例 -->
+<div id="app" v-cloak>
+    <!--
+    vue提供Vue.extend和$mount两个方法来手动挂载一个实例;
+    extend是基础构造器,创建爱嗯一个子类,参数是一个包含组件选项的对象;
+    如果在实例化时没有收到el选项，就处于'未挂载'状态，没有关联的DOM元素;
+    可以使用$mount手动地挂载一个未挂载的实例。这个方法返回实例自身，因而可以链式调用其它实例方法;
+    -->
+
+    <com-a></com-a>
+    <script type="text/x-template" id="com-a">
+        <div>这是组件的内容</div>
+    </script>
+</div>
+
+<script src="js/vue.min.js"></script>
+<script>
+
+    var MyCom= Vue.component('com-a', {
+        template: '<div>Hello:{{name}}</div>',
+        data: function () {
+            return {
+                name: 'Aresn'
+            }
+        }
+    });
+    // 两种方式都行;
+    new MyCom().$mount('#app');
+/*    new MyCom(function () {
+        el:'app'
+    });*/
+    // 在文档外挂载
+    document.getElementById('app').appendChild(component.$el);
+   /* var app = new Vue({
+        el: '#app',
+        data: function () {
+            return {
+            }
+        }
+    })*/
+</script>
+
+</body>
+</html>
