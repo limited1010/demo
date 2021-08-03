@@ -147,7 +147,7 @@ public class ImgToMd {
                     String newFilePath = mdFilePath.concat(writeDir).concat("/" + fs.getName());
 
 //                    imgZip(oldFile, newFilePath); // 压缩处理
-                    zipImgByThubnails(oldFile,newFilePath);
+                    zipImgByThubnails(oldFile, newFilePath);
 //                    syncModified(fs.getAbsolutePath(), newFilePath); // 同步元数据
                 }
             }
@@ -652,7 +652,7 @@ public class ImgToMd {
         for (File fs : files) {
             if (fs.isFile() && fs.exists()) {
 //                imgZip(fs, dectPath.concat(fs.getName())); // 压缩或拷贝目录下所有图片到指定目录
-                zipImgByThubnails(fs.getAbsolutePath(),dectPath.concat(fs.getName()));
+                zipImgByThubnails(fs.getAbsolutePath(), dectPath.concat(fs.getName()));
 
                 syncModified(fs.getAbsolutePath(), dectPath); // 同步元数据
             }
@@ -934,8 +934,8 @@ public class ImgToMd {
      * @return
      */
     static public void zipImgByThubnails(String sourceImg, String outImg) {
-        log.info("zip\t"+outImg);
-        File f1=new File(sourceImg);
+        log.info("zip\t" + outImg);
+        File f1 = new File(sourceImg);
         if (f1.length() / 1024 >= 200) { // 大于200kb则压缩
             try {
                 Thumbnails.of(sourceImg)
@@ -945,11 +945,11 @@ public class ImgToMd {
             } catch (IOException e) {
                 e.printStackTrace();
             }
-        }else {
-            copyFileByChannelTransfer(sourceImg,outImg);
+        } else {
+            copyFileByChannelTransfer(sourceImg, outImg);
         }
 
-        syncModified(sourceImg,outImg);
+        syncModified(sourceImg, outImg);
     }
 
     public static void main(String[] args) {
